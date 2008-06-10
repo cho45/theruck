@@ -1,5 +1,9 @@
 
+require "rack"
+
 module TheRuck
+	VERSION = "0.0.0"
+
 	class Controller
 		GET  = "GET"
 		PUT  = "PUT"
@@ -31,6 +35,7 @@ module TheRuck
 					method = h ? h : //
 
 					handler_name = "handler_#{source}"
+					handler_name << "_#{method}" if h
 					define_method(handler_name, block)
 
 					regexp, names = _route(source)
@@ -65,6 +70,10 @@ module TheRuck
 				[regex, names]
 			end
 
+			def view(classn)
+
+			end
+
 			# Rack interface
 			def call(env)
 				new.handle(env)
@@ -76,7 +85,7 @@ module TheRuck
 		end
 
 		def handle(env)
-			@status, @header, @body = 200, {}, ""
+			@status, @header, @body = 200, {}, []
 			@stash  = {}
 			@env    = env
 			@params = env["QUERY_STRING"].split(/[&;]/).inject({}) {|r,pair|
@@ -104,7 +113,26 @@ module TheRuck
 
 			send("handler_default") unless dispatched
 
-			[@status, @header, [@body]]
+			[@status, @header, @body]
+		end
+
+		def head(key, value=nil)
+			case key
+			when Hash
+				@header.update key
+			when Integer
+				@status = key
+			else
+				@header[key] = value
+			end
+		end
+
+		def body(l)
+			@body << l
+		end
+
+		def params
+			@params
 		end
 	end
 
@@ -157,19 +185,24 @@ if $0 == __FILE__
 	include TheRuck
 
 	class FooController < Controller
+		view :HTML
+
 		route "" do
 			# do do
 
-			view :html, :index
+			view :index
 		end
 
 		route "atom/:id", GET do
+			body "get"
 		end
 
 		route "atom/:id", POST do
+			body "post"
 		end
 
 		route "atom/:id", PUT do
+			body "put"
 		end
 
 		route "api" => :ApiController

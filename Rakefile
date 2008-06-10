@@ -22,7 +22,7 @@ DESCRIPTION       = ""
 RUBYFORGE_PROJECT = "lowreal"
 HOMEPATH          = "http://#{RUBYFORGE_PROJECT}.rubyforge.org"
 BIN_FILES         = %w(  )
-VERS              = Theruck::VERSION
+VERS              = TheRuck::VERSION
 
 REV = File.read(".svn/entries")[/committed-rev="(d+)"/, 1] rescue nil
 CLEAN.include ['**/.*.sw?', '*.gem', '.config']
