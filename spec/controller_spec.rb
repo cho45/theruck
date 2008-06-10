@@ -120,6 +120,7 @@ describe TheRuck do
 
 	it "should handle detach action" do
 		@req.get("/detach").body.should == "index foobar"
+		@req.get("/api/detach").body.should == "index foobar"
 	end
 end
 

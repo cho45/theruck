@@ -10,6 +10,10 @@ class TestRootController
 			head "Content-Type", "application/octet-stream"
 			body Marshal.dump(params)
 		end
+
+		route "detach" do
+			detach "/"
+		end
 	end
 end
 

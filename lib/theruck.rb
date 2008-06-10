@@ -84,8 +84,14 @@ module TheRuck
 			end
 		end
 
-		def initialize(params={})
-			@params = params
+		def initialize(params=nil)
+			if params
+				@params = params
+				@root   = false
+			else
+				@params = {}
+				@root   = true
+			end
 		end
 
 		def handlers
@@ -130,8 +136,12 @@ module TheRuck
 
 			[@status, @header, @body]
 		rescue Detach => e
-			env["PATH_INFO"] = e.message
-			retry
+			if @root
+				env["PATH_INFO"] = e.message
+				retry
+			else
+				raise
+			end
 		end
 
 		def head(key, value=nil)
