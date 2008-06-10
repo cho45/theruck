@@ -7,6 +7,17 @@ module TheRuck
 	class TheRuckError < StandardError; end
 	class Detach < Exception; end
 
+	class Stash < Hash
+		def method_missing(name, value=nil)
+			name = name.to_s
+			if name.sub!(/=$/, '')
+				self[name] = value
+			else
+				self[name]
+			end
+		end
+	end
+
 	class Controller
 		GET  = "GET"
 		PUT  = "PUT"
@@ -16,7 +27,6 @@ module TheRuck
 		@@config = {}
 
 		class << self
-
 			attr_accessor :handlers
 
 			def config=(config)
@@ -100,7 +110,7 @@ module TheRuck
 
 		def handle(env)
 			@status, @header, @body = 200, {}, []
-			@stash  = {}
+			@stash  = Stash.new
 			@env    = env
 			@params.update env["QUERY_STRING"].split(/[&;]/).inject({}) {|r,pair|
 				key, value = pair.split("=", 2).map {|str|

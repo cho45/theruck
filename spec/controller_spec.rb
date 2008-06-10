@@ -122,5 +122,15 @@ describe TheRuck do
 		@req.get("/detach").body.should == "index foobar"
 		@req.get("/api/detach").body.should == "index foobar"
 	end
+
+	it "should has stash object" do
+		stash = Stash.new
+		stash.json = [1, 2, 3]
+
+		stash.should == { "json" => [1, 2, 3] }
+		stash.json.should == stash["json"]
+	end
+
+	it "should call before/after hook"
 end
 
