@@ -22,6 +22,11 @@ class TestRootController < Controller
 		body "help"
 	end
 
+	route "detach" do
+		detach "/"
+		body "not shown"
+	end
+
 	route "method", GET do
 		head "Content-Type", "text/plain"
 		body "get"
@@ -111,6 +116,10 @@ describe TheRuck do
 		@req.get("/api/sample1").body.should == "sample1"
 		Marshal.load(@req.get("/api/params/foo/bar").body).should == {"param1"=>"foo", "param2"=>"bar"}
 		Marshal.load(@req.get("/api1/cho45/params/foo/bar").body).should == {"user"=>"cho45","param1"=>"foo", "param2"=>"bar"}
+	end
+
+	it "should handle detach action" do
+		@req.get("/detach").body.should == "index foobar"
 	end
 end
 

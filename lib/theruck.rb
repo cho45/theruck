@@ -4,6 +4,9 @@ require "rack"
 module TheRuck
 	VERSION = "0.0.0"
 
+	class TheRuckError < StandardError; end
+	class Detach < Exception; end
+
 	class Controller
 		GET  = "GET"
 		PUT  = "PUT"
@@ -126,6 +129,9 @@ module TheRuck
 			send("handler_default") unless dispatched
 
 			[@status, @header, @body]
+		rescue Detach => e
+			env["PATH_INFO"] = e.message
+			retry
 		end
 
 		def head(key, value=nil)
@@ -151,6 +157,10 @@ module TheRuck
 			head 404
 			head "Content-Type", "text/plain"
 			body "404"
+		end
+
+		def detach(path)
+			raise Detach, path
 		end
 	end
 
