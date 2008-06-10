@@ -65,6 +65,10 @@ class TestRootController < Controller
 	end
 end
 
+def warn(*)
+	# pass
+end
+
 # view and controller has same interface.
 describe TheRuck do
 	before do

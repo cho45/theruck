@@ -112,11 +112,11 @@ module TheRuck
 					dispatched = true
 					case handler
 					when Symbol
-						$stderr.puts "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
+						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
 						env["PATH_INFO"] = "/#{@params.delete("")}"
 						@status, @header, @body = self.class.const_get(handler).new(@params).handle(env)
 					else
-						$stderr.puts "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
+						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
 						send(handler)
 					end
 					break
