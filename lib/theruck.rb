@@ -58,15 +58,16 @@ module TheRuck
 				regex = paths.empty?? %r|^/$| : Regexp.new(paths.inject("^") {|r,i|
 					case i[0]
 					when ?:
-						names << i.sub(":", "")
-						r << "/([^/]+)"
+						name, regexp = i.sub(":", "").split(/\s+/, 2)
+						names << name
+						r << (regexp ? "/(#{regexp})" : "/([^/]+)")
 					when ?*
 						names << i.sub("*", "")
 						r << "(?:/(.*))?"
 					else
 						r << "/#{i}"
 					end
-				} + "$")
+				} + "/?$")
 				[regex, names]
 			end
 
@@ -144,6 +145,12 @@ module TheRuck
 
 		def params
 			@params
+		end
+
+		def handler_default
+			head 404
+			head "Content-Type", "text/plain"
+			body "404"
 		end
 	end
 

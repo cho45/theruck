@@ -14,7 +14,7 @@ class TestRootController < Controller
 
 	route "" do
 		head "Content-Type", "text/plain"
-		body "index"
+		body "index #{normal_method}"
 	end
 
 	route "help" do
@@ -42,8 +42,27 @@ class TestRootController < Controller
 		body Marshal.dump(params)
 	end
 
+	route "regexp/:year #{/\d{4}/}" do
+		head "Content-Type", "text/plain"
+		body Marshal.dump(params)
+	end
+
+	route "regexp/:year #{/\d{4}/}/:month #{/\d\d/}" do
+		head "Content-Type", "text/plain"
+		body Marshal.dump(params)
+	end
+
+	route "regexp/:year #{/\d{4}/}/:month #{/\d\d/}/:day #{/\d\d/}" do
+		head "Content-Type", "text/plain"
+		body Marshal.dump(params)
+	end
+
 	route "api/*" => :ApiController
 	route "api1/:user/*" => :ApiController
+
+	def normal_method
+		"foobar"
+	end
 end
 
 # view and controller has same interface.
@@ -55,7 +74,11 @@ describe TheRuck do
 	it "should dispatch index and response correctly" do
 		res = @req.get("")
 		res.headers["Content-Type"].should == "text/plain"
-		res.body.should  == "index"
+		res.body.should  == "index foobar"
+	end
+
+	it "should treat slashes correctly" do
+		@req.get("/help").body.should == @req.get("/help/").body
 	end
 
 	it "should dispatch each http method." do
@@ -67,6 +90,13 @@ describe TheRuck do
 	it "should pass parameters via params method" do
 		Marshal.load(@req.get("/params/foo/bar").body).should == {"param1"=>"foo", "param2"=>"bar"}
 		Marshal.load(@req.get("/params/foo/bar?opt=1").body).should == {"param1"=>"foo", "param2"=>"bar", "opt"=>"1"}
+	end
+
+	it "should handle regexp param" do
+		@req.get("/regexp/xxxx").status.should == 404
+		Marshal.load(@req.get("/regexp/2005").body).should == {"year"=>"2005"}
+		Marshal.load(@req.get("/regexp/2005/01").body).should == {"year"=>"2005", "month"=>"01"}
+		Marshal.load(@req.get("/regexp/2005/01/21").body).should == {"year"=>"2005", "month"=>"01", "day"=>"21"}
 	end
 
 	it "should autoload sub controllers" do
