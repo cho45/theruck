@@ -1,15 +1,16 @@
 #!/usr/bin/env ruby
 
+require "pathname"
 
-$LOAD_PATH << "lib"
-$LOAD_PATH << "../lib"
+$LOAD_PATH << Pathname.new(__FILE__).parent + "fixtures"
+$LOAD_PATH << Pathname.new(__FILE__).parent.parent + "lib"
 
 require "rubygems"
 require "spec"
 require "theruck"
 include TheRuck
 
-class FooController < Controller
+class TestRootController < Controller
 
 	route "" do
 		head "Content-Type", "text/plain"
@@ -41,13 +42,14 @@ class FooController < Controller
 		body Marshal.dump(params)
 	end
 
-	route "api" => :ApiController
+	route "api/*" => :ApiController
+	route "api1/:user/*" => :ApiController
 end
 
 # view and controller has same interface.
 describe TheRuck do
 	before do
-		@req = Rack::MockRequest.new(FooController)
+		@req = Rack::MockRequest.new(TestRootController)
 	end
 
 	it "should dispatch index and response correctly" do
@@ -68,13 +70,13 @@ describe TheRuck do
 	end
 
 	it "should autoload sub controllers" do
-		FooController.autoload?(:ApiController).should == "api_controller"
+		TestRootController.autoload?(:ApiController).should == "api_controller"
 	end
 
 	it "should dispatch sub controllers correctly" do
-		pending do
-			@req.get("/api/sample1")
-		end
+		@req.get("/api/sample1").body.should == "sample1"
+		Marshal.load(@req.get("/api/params/foo/bar").body).should == {"param1"=>"foo", "param2"=>"bar"}
+		Marshal.load(@req.get("/api1/cho45/params/foo/bar").body).should == {"user"=>"cho45","param1"=>"foo", "param2"=>"bar"}
 	end
 end
 

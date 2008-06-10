@@ -41,13 +41,13 @@ module TheRuck
 					regexp, names = _route(source)
 					self.handlers << [source, regexp, method, names, handler_name]
 				when Hash
-					# route "api" => ApiController
+					# route "api" => :ApiController
 					source = o.keys.first
 					classn, feature = o[source]
 					feature = classn.to_s.scan(/[A-Z][^A-Z]*/).map {|i| i.downcase }.join("_") unless feature
 
 					regexp, names = _route(source)
-					self.handlers << [source, regexp, //, names, nil]
+					self.handlers << [source, regexp, //, names, classn]
 					self.autoload classn, feature
 				end
 			end
@@ -80,6 +80,10 @@ module TheRuck
 			end
 		end
 
+		def initialize(params={})
+			@params = params
+		end
+
 		def handlers
 			self.class.handlers
 		end
@@ -88,7 +92,7 @@ module TheRuck
 			@status, @header, @body = 200, {}, []
 			@stash  = {}
 			@env    = env
-			@params = env["QUERY_STRING"].split(/[&;]/).inject({}) {|r,pair|
+			@params.update env["QUERY_STRING"].split(/[&;]/).inject({}) {|r,pair|
 				key, value = pair.split("=", 2).map {|str|
 					str.tr("+", " ").gsub(/(?:%[0-9a-fA-F]{2})+/) {
 						[Regexp.last_match[0].delete("%")].pack("H*")
@@ -98,15 +102,22 @@ module TheRuck
 			}
 
 			dispatched = false
-			handlers.each do |source, regexp, method, names, handler_name|
-				# p [source, regexp, method, names, handler_name]
+			handlers.each do |source, regexp, method, names, handler|
+				# p [source, regexp, method, names, handler]
 				if method === env["REQUEST_METHOD"] && regexp === env["PATH_INFO"]
 					@params.update names.zip(Regexp.last_match.captures).inject({}) {|r,(k,v)|
 						r.update(k => v)
 					}
-					$stderr.puts "dispatch #{env["PATH_INFO"]} => #{source} => #{handler_name}"
 					dispatched = true
-					send(handler_name)
+					case handler
+					when Symbol
+						$stderr.puts "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
+						env["PATH_INFO"] = "/#{@params.delete("")}"
+						@status, @header, @body = self.class.const_get(handler).new(@params).handle(env)
+					else
+						$stderr.puts "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
+						send(handler)
+					end
 					break
 				end
 			end
