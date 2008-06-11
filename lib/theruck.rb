@@ -111,13 +111,12 @@ module TheRuck
 			end
 		end
 
-		def initialize(params=nil)
-			if params
-				@params = params
-				@root   = false
+		def initialize(parent=nil)
+			@parent = parent
+			if @parent
+				@params = parent.params
 			else
 				@params = {}
-				@root   = true
 			end
 		end
 
@@ -150,7 +149,7 @@ module TheRuck
 					when Symbol
 						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
 						env["PATH_INFO"] = "/#{@params.delete("")}"
-						@status, @header, body = self.class.const_get(handler).new(@params).handle(env)
+						@status, @header, body = self.class.const_get(handler).new(self).handle(env)
 						@body.concat body
 					else
 						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
@@ -168,11 +167,11 @@ module TheRuck
 
 			[@status, @header, @body]
 		rescue Detach => e
-			if @root
+			if @parent
+				raise
+			else
 				env["PATH_INFO"] = e.message
 				retry
-			else
-				raise
 			end
 		end
 
@@ -195,6 +194,10 @@ module TheRuck
 			@params
 		end
 
+		def env
+			@env
+		end
+
 		def handler_default
 			head 404
 			head "Content-Type", "text/plain"
@@ -203,6 +206,22 @@ module TheRuck
 
 		def detach(path)
 			raise Detach, path
+		end
+
+		def redirect(path)
+			head 302
+			# "#{env["rack.url_scheme"]}://#{env["SERVER_NAME"]}#{env["SCRIPT_NAME"]}#{path}"
+			head "Content-Type", "text/html"
+			head "Location", "#{env["SCRIPT_NAME"]}#{path}"
+			body "<a href='#{env["SCRIPT_NAME"]}#{path}'>redirect</a>"
+		end
+
+		def method_missing(name, *args)
+			if @parent
+				@parent.send(name, *args)
+			else
+				super
+			end
 		end
 	end
 
