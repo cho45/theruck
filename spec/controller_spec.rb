@@ -62,8 +62,18 @@ class TestRootController < Controller
 		body Marshal.dump(params)
 	end
 
-	route "api/*" => :ApiController
+	route "double-match/*" do
+		body "double-match1"
+	end
+
+	route "double-match/foo/*" do
+		body "double-match2"
+	end
+
+	route "api/*"        => :ApiController
 	route "api1/:user/*" => :ApiController
+
+	route "admin/*" => :AdminController
 
 	def normal_method
 		"foobar"
@@ -95,6 +105,13 @@ describe TheRuck do
 		@req.put("/method").body.should == "put"
 		@req.post("/method").body.should == "post"
 	end
+
+	it "should have ordered match" do
+		@req.get("/double-match").body.should == "double-match1"
+		@req.get("/double-match/foo").body.should == "double-match2"
+		@req.get("/double-match/bar").body.should == "double-match1"
+	end
+
 
 	it "should pass parameters via params method" do
 		Marshal.load(@req.get("/params/foo/bar").body).should == {"param1"=>"foo", "param2"=>"bar"}

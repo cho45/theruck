@@ -52,7 +52,7 @@ module TheRuck
 					define_method(handler_name, block)
 
 					regexp, names = _route(source)
-					self.handlers << [source, regexp, method, names, handler_name]
+					self.handlers.unshift [source, regexp, method, names, handler_name]
 				when Hash
 					# route "api" => :ApiController
 					source = o.keys.first
@@ -60,7 +60,7 @@ module TheRuck
 					feature = classn.to_s.scan(/[A-Z][^A-Z]*/).map {|i| i.downcase }.join("_") unless feature
 
 					regexp, names = _route(source)
-					self.handlers << [source, regexp, //, names, classn]
+					self.handlers.unshift [source, regexp, //, names, classn]
 					self.autoload classn, feature
 				end
 			end
