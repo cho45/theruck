@@ -29,6 +29,12 @@ module TheRuck
 		class << self
 			attr_accessor :handlers, :before_handlers, :after_handlers
 
+			def inherited(subclass)
+				subclass.handlers        = []
+				subclass.before_handlers = []
+				subclass.after_handlers  = []
+			end
+
 			def config=(config)
 				@@config = config
 				self
@@ -39,7 +45,6 @@ module TheRuck
 			end
 
 			def route(o, h=nil, &block)
-				self.handlers ||= []
 				case o
 				when String
 					# route "foo"
@@ -89,9 +94,15 @@ module TheRuck
 			end
 
 			def before(&block)
+				handler_name = "before_#{self.before_handlers.size}"
+				define_method(handler_name, block)
+				self.before_handlers << handler_name
 			end
 
 			def after(&block)
+				handler_name = "after_#{self.after_handlers.size}"
+				define_method(handler_name, block)
+				self.after_handlers << handler_name
 			end
 
 			# Rack interface
@@ -110,10 +121,6 @@ module TheRuck
 			end
 		end
 
-		def handlers
-			self.class.handlers
-		end
-
 		def handle(env)
 			@status, @header, @body = 200, {}, []
 			@stash  = Stash.new
@@ -127,8 +134,12 @@ module TheRuck
 				r.update(key => value)
 			}
 
+			self.class.before_handlers.each do |handler|
+				send(handler)
+			end
+
 			dispatched = false
-			handlers.each do |source, regexp, method, names, handler|
+			self.class.handlers.each do |source, regexp, method, names, handler|
 				# p [source, regexp, method, names, handler]
 				if method === env["REQUEST_METHOD"] && regexp === env["PATH_INFO"]
 					@params.update names.zip(Regexp.last_match.captures).inject({}) {|r,(k,v)|
@@ -139,7 +150,8 @@ module TheRuck
 					when Symbol
 						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
 						env["PATH_INFO"] = "/#{@params.delete("")}"
-						@status, @header, @body = self.class.const_get(handler).new(@params).handle(env)
+						@status, @header, body = self.class.const_get(handler).new(@params).handle(env)
+						@body.concat body
 					else
 						warn "dispatch #{env["PATH_INFO"]} => #{source} => #{handler}"
 						send(handler)
@@ -149,6 +161,10 @@ module TheRuck
 			end
 
 			send("handler_default") unless dispatched
+
+			self.class.after_handlers.each do |handler|
+				send(handler)
+			end
 
 			[@status, @header, @body]
 		rescue Detach => e
