@@ -47,17 +47,17 @@ class TestRootController < Controller
 	end
 
 	route "regexp/:year #{/\d{4}/}" do
-		head "Content-Type", "text/plain"
+		head "Content-Type", "application/octet-stream"
 		body Marshal.dump(params)
 	end
 
 	route "regexp/:year #{/\d{4}/}/:month #{/\d\d/}" do
-		head "Content-Type", "text/plain"
+		head "Content-Type", "application/octet-stream"
 		body Marshal.dump(params)
 	end
 
 	route "regexp/:year #{/\d{4}/}/:month #{/\d\d/}/:day #{/\d\d/}" do
-		head "Content-Type", "text/plain"
+		head "Content-Type", "application/octet-stream"
 		body Marshal.dump(params)
 	end
 
@@ -81,7 +81,6 @@ def warn(*)
 	# pass
 end
 
-# view and controller has same interface.
 describe TheRuck do
 	before do
 		@req = Rack::MockRequest.new(TestRootController)
@@ -137,7 +136,7 @@ describe TheRuck do
 		@req.get("/api/detach").body.should == "index foobar"
 	end
 
-	it "should has stash object" do
+	it "should have stash object" do
 		stash = Stash.new
 		stash.json = [1, 2, 3]
 

@@ -18,6 +18,8 @@ module TheRuck
 		end
 	end
 
+	autoload :Session, "theruck/session"
+
 	class Controller
 		GET  = "GET"
 		PUT  = "PUT"

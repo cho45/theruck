@@ -53,7 +53,6 @@ def warn(*)
 	# pass
 end
 
-# view and controller has same interface.
 describe TheRuck do
 	before do
 		@req = Rack::MockRequest.new(HookTestRootController)
