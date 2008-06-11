@@ -27,7 +27,7 @@ module TheRuck
 		@@config = {}
 
 		class << self
-			attr_accessor :handlers
+			attr_accessor :handlers, :before_handlers, :after_handlers
 
 			def config=(config)
 				@@config = config
@@ -86,6 +86,12 @@ module TheRuck
 
 			def view(classn)
 
+			end
+
+			def before(&block)
+			end
+
+			def after(&block)
 			end
 
 			# Rack interface

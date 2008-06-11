@@ -11,7 +11,6 @@ require "theruck"
 include TheRuck
 
 class TestRootController < Controller
-
 	route "" do
 		head "Content-Type", "text/plain"
 		body "index #{normal_method}"
@@ -72,8 +71,6 @@ class TestRootController < Controller
 
 	route "api/*"        => :ApiController
 	route "api1/:user/*" => :ApiController
-
-	route "admin/*" => :AdminController
 
 	def normal_method
 		"foobar"
@@ -147,7 +144,5 @@ describe TheRuck do
 		stash.should == { "json" => [1, 2, 3] }
 		stash.json.should == stash["json"]
 	end
-
-	it "should call before/after hook"
 end
 
