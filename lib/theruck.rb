@@ -126,14 +126,8 @@ module TheRuck
 			@status, @header, @body = 200, {}, []
 			@stash  = Stash.new
 			@env    = env
-			@params.update env["QUERY_STRING"].split(/[&;]/).inject({}) {|r,pair|
-				key, value = pair.split("=", 2).map {|str|
-					str.tr("+", " ").gsub(/(?:%[0-9a-fA-F]{2})+/) {
-						[Regexp.last_match[0].delete("%")].pack("H*")
-					}
-				}
-				r.update(key => value)
-			}
+			@req    = Rack::Request.new(env)
+			@params.update @req.params
 
 			self.class.before_handlers.each do |handler|
 				send(handler)
